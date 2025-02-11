@@ -8,11 +8,13 @@ public class PlayerMovement : MonoBehaviour
 {
     [SerializeField] private LayerMask groundLayer;
     [SerializeField] private LayerMask wallLayer;
-    private Rigidbody2D body;
     [SerializeField] private float speed;
+    [SerializeField] private float jumpPower;
+    private Rigidbody2D body;
     private Animator animator;
     private BoxCollider2D boxCollider;
     private float wallJumpCooldown;
+    private float horizontalInput;
 
     private void Awake(){
         //Grab references for rigidbody and animator from object
@@ -23,16 +25,14 @@ public class PlayerMovement : MonoBehaviour
     }
     private void Update() {
         //movement
-        float horizontalInput = UnityEngine.Input.GetAxis("Horizontal");
+        horizontalInput = UnityEngine.Input.GetAxis("Horizontal");
         
 
         //wall jumping
-        if(wallJumpCooldown < 0.2f)
+        if(wallJumpCooldown > 0.2f)
         {
         
-            if(UnityEngine.Input.GetKey(KeyCode.Space) && isGrounded())
-                Jump();
-
+            
             body.velocity = new Vector2(horizontalInput* speed, body.velocity.y);
 
             if(onWall() && !isGrounded())
@@ -41,7 +41,11 @@ public class PlayerMovement : MonoBehaviour
               body.velocity = Vector2.zero;  
             }
             else
-                body.gravityScale = 2.5f;   
+                body.gravityScale = 7;
+            
+            if(UnityEngine.Input.GetKey(KeyCode.Space))
+                Jump();
+
 
         }
         else
@@ -61,9 +65,25 @@ public class PlayerMovement : MonoBehaviour
         print(onWall());
     }
 
-    private void Jump(){
-        body.velocity = new Vector2(body.velocity.x, speed);
-        animator.SetTrigger("jump");
+    private void Jump()
+    {
+        if(isGrounded())
+        {
+            body.velocity = new Vector2(body.velocity.x, jumpPower);
+            animator.SetTrigger("jump");
+
+        }
+        else if(onWall() && !isGrounded())
+        {
+            if(horizontalInput == 0)
+            {
+                body.velocity = new Vector2(- Mathf.Sign(transform.localScale.x) * 10, 0);
+                transform.localScale = new Vector3(- Mathf.Sign(transform.localScale.x), transform.localScale.y, transform.localScale.z);
+            }
+            else
+                body.velocity = new Vector2(- Mathf.Sign(transform.localScale.x) * 3, 6);
+            wallJumpCooldown= 0;
+        }
         
     }
 
